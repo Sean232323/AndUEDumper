@@ -16,25 +16,25 @@ jobs:
     - name: Checkout source code
       uses: actions/checkout@v3
 
-    - name: Download and extract Android NDK
+    - name: Download Android NDK with curl and extract
+      shell: cmd
       run: |
-        Invoke-WebRequest -Uri https://dl.google.com/android/repository/android-ndk-r21e-windows-x86_64.zip -OutFile ndk.zip
-        Expand-Archive ndk.zip -DestinationPath $Env:USERPROFILE\android-ndk
-        Remove-Item ndk.zip
-      shell: powershell
+        curl -L -o ndk.zip https://dl.google.com/android/repository/android-ndk-r21e-windows-x86_64.zip
+        powershell -Command "Expand-Archive ndk.zip -DestinationPath %USERPROFILE%\android-ndk"
+        del ndk.zip
 
     - name: Add NDK to PATH
+      shell: powershell
       run: |
         echo "$Env:USERPROFILE\android-ndk\android-ndk-r21e" | Out-File -FilePath $Env:GITHUB_PATH -Encoding utf8 -Append
-      shell: powershell
 
     - name: Run ndk-build.bat inside AndUEDumper folder
-      run: cd AndUEDumper && ndk-build.bat
       shell: cmd
+      run: cd AndUEDumper && ndk-build.bat
 
     - name: List build output files
-      run: dir AndUEDumper\build /S
       shell: cmd
+      run: dir AndUEDumper\build /S
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
