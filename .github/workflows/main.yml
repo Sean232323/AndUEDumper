@@ -1,0 +1,48 @@
+name: Build AndUEDumper with NDK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
+
+    - name: Setup Android NDK
+      run: |
+        mkdir -p $HOME/android-ndk
+        curl -L https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip -o $HOME/android-ndk.zip
+        unzip -q $HOME/android-ndk.zip -d $HOME/android-ndk
+        rm $HOME/android-ndk.zip
+        echo "ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r21e" >> $GITHUB_ENV
+        echo "$HOME/android-ndk/android-ndk-r21e" >> $GITHUB_PATH
+
+    - name: Ensure ndk-build is executable and in PATH
+      run: |
+        export PATH=$HOME/android-ndk/android-ndk-r21e:$PATH
+        which ndk-build
+
+    - name: Run ndk-build.sh script
+      run: |
+        chmod +x ndk-build.sh
+        ./ndk-build.sh
+      env:
+        ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
+        PATH: ${{ env.PATH }}
+
+    - name: List build output files
+      run: ls -R build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: AndUEDumper-build
+        path: build/
