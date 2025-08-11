@@ -1,4 +1,4 @@
-name: Build AndUEDumper on Windows
+name: Build AndUEDumper with NDK
 
 on:
   push:
@@ -9,35 +9,39 @@ on:
       - main
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
 
-    - name: Download Android NDK with curl and extract
-      shell: cmd
+    - name: Setup Android NDK
       run: |
-        curl -L -o ndk.zip https://dl.google.com/android/repository/android-ndk-r21e-windows-x86_64.zip
-        powershell -Command "Expand-Archive ndk.zip -DestinationPath %USERPROFILE%\android-ndk"
-        del ndk.zip
+        mkdir -p $HOME/android-ndk
+        curl -L https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip -o $HOME/android-ndk.zip
+        unzip -q $HOME/android-ndk.zip -d $HOME/android-ndk
+        rm $HOME/android-ndk.zip
+        echo "ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r21e" >> $GITHUB_ENV
+        echo "$HOME/android-ndk/android-ndk-r21e" >> $GITHUB_PATH
 
-    - name: Add NDK to PATH
-      shell: powershell
+    - name: Ensure ndk-build is executable and in PATH
       run: |
-        echo "$Env:USERPROFILE\android-ndk\android-ndk-r21e" | Out-File -FilePath $Env:GITHUB_PATH -Encoding utf8 -Append
+        export PATH=$HOME/android-ndk/android-ndk-r21e:$PATH
+        which ndk-build
 
-    - name: Run ndk-build.bat inside AndUEDumper folder
-      shell: cmd
-      run: cd AndUEDumper && ndk-build.bat
+    - name: Run ndk-build.sh script
+      run: |
+        ./ndk-build.sh
+      env:
+        ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
+        PATH: ${{ env.PATH }}
 
     - name: List build output files
-      shell: cmd
-      run: dir AndUEDumper\build /S
+      run: ls -R build
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: AndUEDumper-build
-        path: AndUEDumper\build\
+        path: build/
