@@ -4,4 +4,3 @@ md build 2> nul
 make
 move libs build/libs
 move obj build/obj
-pause
