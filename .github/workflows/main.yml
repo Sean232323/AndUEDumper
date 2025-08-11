@@ -31,8 +31,11 @@ jobs:
         which ndk-build
 
     - name: Run ndk-build.sh script
+      shell: bash
       run: |
-        ./ndk-build.sh
+           chmod +x ndk-build.sh
+           ./ndk-build.sh
+
       env:
         ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         PATH: ${{ env.PATH }}
